@@ -18,7 +18,7 @@ pub struct SperryModel
 }
 
 impl SperryModel {
-    fn new(config: SperryConfig, data: SperryData) -> Self {
+    pub fn new(config: SperryConfig, data: SperryData) -> Self {
             Self{config, data}
     }
 }

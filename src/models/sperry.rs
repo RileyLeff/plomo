@@ -1,5 +1,7 @@
-use crate::Model;
+use serde::{Serialize, Deserialize};
+use crate::{Model, Output};
 use polars::prelude::*;
+use polars::error::PolarsError::Io;
 use thiserror::Error;
 use floco::Floco;
 
@@ -9,18 +11,26 @@ pub enum SperryError {
     SomethingWrong()
 }
 
-struct SperryModel
+pub struct SperryModel
 {
     config: SperryConfig,
     data: SperryData
 }
 
-struct SperryConfig {
-    soil: f64,
-    plant: f64
+impl SperryModel {
+    fn new(config: SperryConfig, data: SperryData) -> Self {
+            Self{config, data}
+    }
 }
 
-struct SperryData(DataFrame);
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct SperryConfig {
+    soil: f64,
+    plant: f64,
+    path_to_write: std::path::PathBuf
+}
+
+pub struct SperryData(DataFrame);
 
 impl SperryData {
     fn try_new(path: std::path::PathBuf) -> Result<Self, SperryError> {
@@ -46,9 +56,39 @@ impl TryFrom<std::path::PathBuf> for SperryData {
     }
 }
 
-
 impl Model for SperryModel {
-    fn execute() -> bool {
-        true
+
+    type Error = SperryError;
+
+    fn execute(&self) -> Result<(), Self::Error> {
+        let df = df! {
+            "Foo" => [69.0f64],
+            "Bar" => [4.20f64]
+        }.unwrap();
+
+        let mut out = SperryOutput::new(df);
+
+        out.write(self.config.path_to_write.clone())
+            .map_err(
+                |err| 
+                    Self::Error::SomethingWrong()
+            )
+    }
+}
+
+pub struct SperryOutput(DataFrame);
+
+impl SperryOutput {
+    fn new(df: DataFrame) -> Self {
+        Self(df)
+    }
+}
+
+impl Output for SperryOutput {
+    type Error = polars::error::PolarsError;
+    fn write(&mut self, path: std::path::PathBuf) -> Result<(), Self::Error> {
+        let mut file = std::fs::File::create(path)?;
+        CsvWriter::new(&mut file).finish(&mut self.0)?;
+        Ok(())
     }
 }

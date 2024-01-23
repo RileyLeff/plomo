@@ -1,8 +1,17 @@
 // Generics
 
+use polars::frame::DataFrame;
+
 trait Model
 {
-    fn execute() -> bool;
+    type Error;
+    
+    fn execute(&self) -> Result<(), Self::Error>;
+}
+
+trait Output {
+    type Error;
+    fn write(&mut self, path: std::path::PathBuf) -> Result<(),Self::Error>;
 }
 
 pub mod models;

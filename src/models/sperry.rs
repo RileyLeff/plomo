@@ -31,7 +31,7 @@ pub struct SperryConfig {
 }
 
 impl SperryConfig {
-    fn new(soil: f64, plant: f64, path_to_write: std::path::PathBuf) -> Self {
+    pub fn new(soil: f64, plant: f64, path_to_write: std::path::PathBuf) -> Self {
         Self{soil, plant, path_to_write}
     }
 }
@@ -39,7 +39,7 @@ impl SperryConfig {
 pub struct SperryData(DataFrame);
 
 impl SperryData {
-    fn try_new(path: std::path::PathBuf) -> Result<Self, SperryError> {
+    pub fn try_new(path: std::path::PathBuf) -> Result<Self, SperryError> {
         let df = df! {
             "Foo" => [69.0f64],
             "Bar" => [4.20f64]
@@ -48,7 +48,7 @@ impl SperryData {
         Ok(Self(df.unwrap()))
     }
 
-    fn validate(df: DataFrame) -> bool {
+    pub fn validate(df: DataFrame) -> bool {
         true
     }
 }
@@ -85,7 +85,7 @@ impl Model for SperryModel {
 pub struct SperryOutput(DataFrame);
 
 impl SperryOutput {
-    fn new(df: DataFrame) -> Self {
+    pub fn new(df: DataFrame) -> Self {
         Self(df)
     }
 }

@@ -30,6 +30,12 @@ pub struct SperryConfig {
     path_to_write: std::path::PathBuf
 }
 
+impl SperryConfig {
+    fn new(soil: f64, plant: f64, path_to_write: std::path::PathBuf) -> Self {
+        Self{soil, plant, path_to_write}
+    }
+}
+
 pub struct SperryData(DataFrame);
 
 impl SperryData {

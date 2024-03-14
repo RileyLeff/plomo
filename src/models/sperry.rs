@@ -14,11 +14,11 @@ pub enum SperryError {
 pub struct SperryModel
 {
     config: SperryConfig,
-    data: SperryData
+    data: DataFrame
 }
 
 impl SperryModel {
-    pub fn new(config: SperryConfig, data: SperryData) -> Self {
+    pub fn new(config: SperryConfig, data: DataFrame) -> Self {
             Self{config, data}
     }
 }
@@ -35,6 +35,8 @@ impl SperryConfig {
         Self{soil, plant, path_to_write}
     }
 }
+
+
 
 pub struct SperryData(DataFrame);
 
@@ -66,19 +68,13 @@ impl Model for SperryModel {
 
     type Error = SperryError;
 
-    fn execute(&self) -> Result<(), Self::Error> {
+    fn execute(&self) -> Result<SperryOutput, Self::Error> {
         let df = df! {
-            "Foo" => [69.0f64],
-            "Bar" => [4.20f64]
+            "Foo" => [100.1f64],
+            "Bar" => [101.0f64]
         }.unwrap();
 
-        let mut out = SperryOutput::new(df);
-
-        out.write(self.config.path_to_write.clone())
-            .map_err(
-                |err| 
-                    Self::Error::SomethingWrong()
-            )
+        Ok(SperryOutput::new(df))
     }
 }
 

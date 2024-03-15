@@ -79,13 +79,24 @@ impl<P: AsRef<Path>> Model<P> for SperryModel {
 
     fn execute (&self, save_to_path: P) -> String {
 
-        let mut df = df! {
-            "Foo" => [69.0f64, 69.69f64, 69.420f64],
-            "Bar" => [4.20f64, 4.269f64, 420.690f64]
-        }.expect("if this fails, something very wrong");
+        // let mut df = df! {
+        //     "Foo" => [69.0f64, 69.69f64, 69.420f64],
+        //     "Bar" => [4.20f64, 4.269f64, 420.690f64]
+        // }.expect("if this fails, something very wrong");
+
+        let mut df_output = self.data
+            .clone()
+            .lazy()
+            .select([
+                (col("Wind") * lit(self.config.plant)).alias("really_big_wind"),
+                (col("Year")),
+                (col("Solar"))
+            ])
+            .collect()
+            .expect("something kinda fucked up if this thread panics here dude");
 
         let mut file = std::fs::File::create(save_to_path).unwrap();
-        CsvWriter::new(&mut file).finish(&mut df).unwrap();
+        CsvWriter::new(&mut file).finish(&mut df_output).unwrap();
 
         let message = String::from("ok!");
 

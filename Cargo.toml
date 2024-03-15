@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-polars = {version = "0.36.2", features = ["csv"]}
+polars = {version = "0.36.2", features = ["csv", "lazy"]}
 thiserror = "1.0.58"
 serde = { version = "1.0.197", features = ["std", "alloc", "derive"] }
 floco = { version = "0.1.0", features = ["std"], default-features = false}

@@ -49,7 +49,6 @@ impl SperryConfig {
 
     pub fn serialize_to_path<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
         let toml_string = toml::to_string(self).expect("incorrectly formatted config");
-        println!("made it here");
         let mut file = std::fs::File::create(path)?;
         file.write_all(toml_string.as_bytes())?;
 
@@ -91,5 +90,31 @@ impl<P: AsRef<Path>> Model<P> for SperryModel {
         let message = String::from("ok!");
 
         message
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Read;
+    use tempfile::NamedTempFile;
+    use std::fs::File;
+
+    #[test]
+    fn test_serialize_to_path() {
+        let config = SperryConfig::default();
+        
+        // Create a temporary file
+        let mut temp_file = NamedTempFile::new().expect("Failed to create temporary file");
+        let temp_file_path = temp_file.path().to_string_lossy().into_owned();
+
+        // Serialize the config to the temporary file
+        assert!(config.serialize_to_path(&temp_file_path).is_ok());
+
+        // Verify that the file content matches the serialized config
+        let mut file_content = String::new();
+        let mut file = File::open(temp_file_path.clone()).expect("Failed to open temporary file");
+        file.read_to_string(&mut file_content).expect("Failed to read temporary file");
+        assert_eq!(file_content, toml::to_string(&config).unwrap());
     }
 }

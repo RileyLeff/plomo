@@ -49,7 +49,7 @@ impl SperryConfig {
 
     pub fn serialize_to_path<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
         let toml_string = toml::to_string(self).expect("incorrectly formatted config");
-
+        println!("made it here");
         let mut file = std::fs::File::create(path)?;
         file.write_all(toml_string.as_bytes())?;
 

@@ -1,6 +1,6 @@
 use polars::frame::DataFrame;
-use std::collections::HashMap;
 use thiserror::Error;
+use std::path::Path;
 
 #[derive(Error, Debug)]
 pub enum ModelIdError<'a> {
@@ -8,10 +8,10 @@ pub enum ModelIdError<'a> {
     UnknownModel(&'a str)
 }
 
-trait Model
+trait Model<P: AsRef<Path>>
 {
     type Error;
-    fn execute(&self) -> Result<impl Output, Self::Error>;
+    fn execute(&self, path: P) -> String;
 }
 
 trait Output {

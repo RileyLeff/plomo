@@ -1,15 +1,9 @@
 use serde::{Serialize, Deserialize};
-use crate::{Model, Output};
+use std::path::{PathBuf, Path};
+use std::fs::read_to_string;
 use polars::prelude::*;
-use polars::error::PolarsError::Io;
-use thiserror::Error;
-use floco::Floco;
-
-#[derive(Error, Debug, PartialEq)]
-pub enum SperryError {
-    #[error("an error occurred")]
-    SomethingWrong()
-}
+use crate::Model;
+//use floco::Floco;
 
 pub struct SperryModel
 {
@@ -21,76 +15,54 @@ impl SperryModel {
     pub fn new(config: SperryConfig, data: DataFrame) -> Self {
             Self{config, data}
     }
+
+    pub fn try_new_from_paths<P: AsRef<Path>, Q: Into<PathBuf>>(config_path: P, data_path: Q) -> Result<Self, &'static str> {
+        let c = SperryConfig::try_new_from_path(config_path)?;
+        let d = CsvReader::from_path(data_path)
+            .unwrap()
+            .finish()
+            .unwrap();
+        Ok(Self::new(c,d))
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct SperryConfig {
     soil: f64,
-    plant: f64,
-    path_to_write: std::path::PathBuf
+    plant: f64
 }
 
 impl SperryConfig {
-    pub fn new(soil: f64, plant: f64, path_to_write: std::path::PathBuf) -> Self {
-        Self{soil, plant, path_to_write}
-    }
-}
-
-
-
-pub struct SperryData(DataFrame);
-
-impl SperryData {
-    pub fn try_new(path: std::path::PathBuf) -> Result<Self, SperryError> {
-        let df = df! {
-            "Foo" => [69.0f64],
-            "Bar" => [4.20f64]
-        };
-
-        Ok(Self(df.unwrap()))
+    pub fn new(soil: f64, plant: f64) -> Self {
+        Self{soil, plant}
     }
 
-    pub fn validate(df: DataFrame) -> bool {
-        true
-    }
-}
-
-impl TryFrom<std::path::PathBuf> for SperryData {
+    pub fn try_new_from_path<P: AsRef<Path>>(path: P) -> Result<Self, &'static str> {
+        let config_str = read_to_string(path).map_err(|_| "can't read config file")?;
     
-    type Error = SperryError;
-
-    fn try_from(path: std::path::PathBuf) -> Result<Self, Self::Error> {
-        Self::try_new(path)
+        // Deserialize TOML into Rust struct
+        let config: Self = toml::from_str(&config_str).map_err(|_| "Unable to deserialize TOML")?;
+        
+        Ok(config)
     }
 }
 
-impl Model for SperryModel {
+impl<P: AsRef<Path>> Model<P> for SperryModel {
 
-    type Error = SperryError;
+    type Error = &'static str;
 
-    fn execute(&self) -> Result<SperryOutput, Self::Error> {
-        let df = df! {
-            "Foo" => [100.1f64],
-            "Bar" => [101.0f64]
-        }.unwrap();
+    fn execute (&self, save_to_path: P) -> String {
 
-        Ok(SperryOutput::new(df))
-    }
-}
+        let mut df = df! {
+            "Foo" => [69.0f64, 69.69f64, 69.420f64],
+            "Bar" => [4.20f64, 4.269f64, 420.690f64]
+        }.expect("if this fails, something very wrong");
 
-pub struct SperryOutput(DataFrame);
+        let mut file = std::fs::File::create(save_to_path).unwrap();
+        CsvWriter::new(&mut file).finish(&mut df).unwrap();
 
-impl SperryOutput {
-    pub fn new(df: DataFrame) -> Self {
-        Self(df)
-    }
-}
+        let message = String::from("ok!");
 
-impl Output for SperryOutput {
-    type Error = polars::error::PolarsError;
-    fn write(&mut self, path: std::path::PathBuf) -> Result<(), Self::Error> {
-        let mut file = std::fs::File::create(path)?;
-        CsvWriter::new(&mut file).finish(&mut self.0)?;
-        Ok(())
+        message
     }
 }

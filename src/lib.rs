@@ -8,7 +8,7 @@ pub enum ModelIdError<'a> {
     UnknownModel(&'a str)
 }
 
-trait Model<P: AsRef<Path>>
+pub trait Model<P: AsRef<Path>>
 {
     type Error;
     fn execute(&self, path: P) -> String;

@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use std::path::{PathBuf, Path};
 use std::fs::read_to_string;
+use std::io::Write;
 use polars::prelude::*;
 use crate::Model;
 //use floco::Floco;
@@ -45,7 +46,33 @@ impl SperryConfig {
         
         Ok(config)
     }
+
+    pub fn serialize_to_path<P: AsRef<Path>>(&self, path: P) -> std::io::Result<()> {
+        let toml_string = toml::to_string(self).expect("incorrectly formatted config");
+
+        let mut file = std::fs::File::create(path)?;
+        file.write_all(toml_string.as_bytes())?;
+
+        Ok(())
+    }
+
+    pub fn serialize_default_to_path<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
+        let dc = SperryConfig::default();
+        dc.serialize_to_path(path)
+    }
 }
+
+
+impl Default for SperryConfig {
+    fn default() -> Self {
+        SperryConfig {
+            soil: 7.0f64,
+            plant: 13.0f64,
+        }
+    }
+}
+
+
 
 impl<P: AsRef<Path>> Model<P> for SperryModel {
 

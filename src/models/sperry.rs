@@ -17,6 +17,96 @@ impl SperryModel {
             Self{config, data}
     }
 
+    pub fn validate_data(df: DataFrame) -> bool {
+
+        // this needs to be broken out into several different functions
+        // and return something informative about why validation failed
+
+        let required_fields = vec![
+            "timestamp", "solar", "rain", "wind", "temp_air", "temp_soil", "vpd"
+        ];
+
+        let cn = df.get_column_names();
+
+        let has_necessary_fields = required_fields.iter().all(|field| cn.contains(field));
+
+        let mut soil_layers: Vec<u8> = Vec::new();
+
+        for name in cn {
+            if !required_fields.contains(&name) {
+                if name.starts_with("psi_soil_layer_") {
+                    soil_layers.push(
+                        name
+                            .chars()
+                            .last()
+                            .expect("can't have blank colname")
+                            .to_digit(10u32)
+                            .expect("unable to convert soil layer digit to radix 10")
+                            .try_into()
+                            .expect("unable to convert soil layer digit into u8")
+                        );
+                } else {
+                    // colname is not in required fields or a validly-numbered soil_layer
+                    return false
+                }
+            }
+        }
+
+        soil_layers.sort();
+
+        let zero_is_first = soil_layers.first().unwrap() == &0u8;
+
+        let diffs = &soil_layers
+            .windows(2)
+            .map(|w| w[1] - w[0])
+            .collect::<Vec<_>>();
+
+        let all_diffs_are_one = diffs.iter().all(|&item| item == 1u8);
+
+        if !has_necessary_fields ||
+        !zero_is_first ||
+        !all_diffs_are_one {
+            return false;
+        } else {
+            return true;
+        }
+
+        // df.select_series(['timestamp']).
+        
+        // solar
+            // no nas
+            // has to be positive or zero + normal float
+        
+        // rain 
+            // no nas
+            // positive or zero + normal float
+
+        // wind
+            // no nas
+            // positive or zero + normal float
+
+        // tair
+            // no nas
+            // normal float, valid temperature celsius
+
+        // tsoil
+            // no nas
+            // normal float, valid temperature celsius
+        
+        // vpd 
+            // no nas
+            // positive or zero + normal float
+
+
+
+        
+
+
+        
+
+
+    }
+
     pub fn try_new_from_paths<P: AsRef<Path>, Q: Into<PathBuf>>(config_path: P, data_path: Q) -> Result<Self, &'static str> {
         let c = SperryConfig::try_new_from_path(config_path)?;
         let d = CsvReader::from_path(data_path)
@@ -98,9 +188,7 @@ impl<P: AsRef<Path>> Model<P> for SperryModel {
         let mut file = std::fs::File::create(save_to_path).unwrap();
         CsvWriter::new(&mut file).finish(&mut df_output).unwrap();
 
-        let message = String::from("ok!");
-
-        message
+        String::from("ok!")
     }
 }
 
